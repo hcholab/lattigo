@@ -39,6 +39,14 @@ type RKGShare struct {
 	value [][2]*ring.Poly
 }
 
+func (s *RKGShare) SetValue(value [][2]*ring.Poly) {
+	s.value = value
+}
+
+func (s *RKGShare) Value() [][2]*ring.Poly {
+	return s.value
+}
+
 // NewRKGProtocol creates a new RKG protocol struct
 func NewRKGProtocol(n int, q, p []uint64, ephSkPr, sigma float64) *RKGProtocol {
 	rkg := new(RKGProtocol)
