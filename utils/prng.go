@@ -9,7 +9,7 @@ import (
 
 // PRNG is an interface for secure (keyed) deterministic generation of random bytes
 type PRNG interface {
-	Clock(sum []byte)
+	Clock(sum []byte) error
 	GetClock() uint64
 	SetClock(sum []byte, n uint64) error
 }
@@ -53,11 +53,10 @@ func (prng *KeyedPRNG) GetClock() uint64 {
 }
 
 // Clock reads bytes from the KeyedPRNG on sum.
-func (prng *KeyedPRNG) Clock(sum []byte) {
-	if _, err := prng.xof.Read(sum); err != nil {
-		panic(err)
-	}
+func (prng *KeyedPRNG) Clock(sum []byte) error {
+	_, err := prng.xof.Read(sum)
 	prng.clock++
+	return err
 }
 
 // SetClock sets the clock cycle of the KeyedPRNG to a given number by calling Clock until

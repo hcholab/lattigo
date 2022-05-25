@@ -3,6 +3,7 @@ package ring
 import (
 	"encoding/binary"
 
+	"github.com/hhcho/frand"
 	"github.com/ldsec/lattigo/v2/utils"
 )
 
@@ -10,6 +11,7 @@ import (
 type UniformSampler struct {
 	baseSampler
 	randomBufferN []byte
+	seedPrng      *frand.RNG
 }
 
 // NewUniformSampler creates a new instance of UniformSampler from a PRNG and ring definition.
@@ -19,6 +21,22 @@ func NewUniformSampler(prng utils.PRNG, baseRing *Ring) *UniformSampler {
 	uniformSampler.prng = prng
 	uniformSampler.randomBufferN = make([]byte, baseRing.N)
 	return uniformSampler
+}
+
+// NewUniformSamplerWithBasePrng creates a new instance of UniformSampler from a seed PRNG (with the ability to refresh) and ring definition.
+func NewUniformSamplerWithBasePrng(seedPrng *frand.RNG, baseRing *Ring) *UniformSampler {
+	uniformSampler := new(UniformSampler)
+	uniformSampler.baseRing = baseRing
+	uniformSampler.seedPrng = seedPrng
+	uniformSampler.randomBufferN = make([]byte, baseRing.N)
+	uniformSampler.RefreshPrng()
+	return uniformSampler
+}
+
+func (uniformSampler *UniformSampler) RefreshPrng() {
+	crpKey := make([]byte, 64)
+	uniformSampler.seedPrng.Read(crpKey)
+	uniformSampler.prng, _ = utils.NewKeyedPRNG(crpKey)
 }
 
 // Read generates a new polynomial with coefficients following a uniform distribution over [0, Qi-1].
@@ -46,7 +64,14 @@ func (uniformSampler *UniformSampler) Read(Pol *Poly) {
 
 				// Refill the pool if it runs empty
 				if ptr == uniformSampler.baseRing.N {
-					uniformSampler.prng.Clock(uniformSampler.randomBufferN)
+					err := uniformSampler.prng.Clock(uniformSampler.randomBufferN)
+					if err != nil { // Reached the end of PRNG
+						uniformSampler.RefreshPrng()
+						err = uniformSampler.prng.Clock(uniformSampler.randomBufferN)
+						if err != nil { // Re-try failed
+							panic(err)
+						}
+					}
 					ptr = 0
 				}
 
