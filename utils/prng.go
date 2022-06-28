@@ -59,6 +59,13 @@ func (prng *KeyedPRNG) Clock(sum []byte) error {
 	return err
 }
 
+// Alternative function to be used as io.Reader
+func (prng *KeyedPRNG) Read(bytes []byte) (int, error) {
+	n, err := prng.xof.Read(bytes)
+	prng.clock++
+	return n, err
+}
+
 // SetClock sets the clock cycle of the KeyedPRNG to a given number by calling Clock until
 // the clock cycle reaches the desired number. Returns an error if the target clock
 // cycle is smaller than the current clock cycle.

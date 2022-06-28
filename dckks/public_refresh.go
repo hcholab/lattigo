@@ -1,6 +1,7 @@
 package dckks
 
 import (
+	"io"
 	"math/big"
 
 	"github.com/ldsec/lattigo/v2/ckks"
@@ -14,6 +15,7 @@ type RefreshProtocol struct {
 	tmp             *ring.Poly
 	maskBigint      []*big.Int
 	gaussianSampler *ring.GaussianSampler
+	prng            io.Reader
 }
 
 // RefreshShareDecrypt is a struct storing the masked decryption share.
@@ -30,11 +32,17 @@ func NewRefreshProtocol(params *ckks.Parameters) (refreshProtocol *RefreshProtoc
 	refreshProtocol.dckksContext = dckksContext
 	refreshProtocol.tmp = dckksContext.RingQ.NewPoly()
 	refreshProtocol.maskBigint = make([]*big.Int, dckksContext.n)
-	prng, err := utils.NewPRNG()
-	if err != nil {
-		panic(err)
+	prng1, err1 := utils.NewPRNG()
+	prng2, err2 := utils.NewPRNG()
+	if err1 != nil || err2 != nil {
+		if err1 != nil {
+			panic(err1)
+		} else {
+			panic(err2)
+		}
 	}
-	refreshProtocol.gaussianSampler = ring.NewGaussianSampler(prng)
+	refreshProtocol.gaussianSampler = ring.NewGaussianSampler(prng1)
+	refreshProtocol.prng = prng2
 
 	return
 }
@@ -60,7 +68,7 @@ func (refreshProtocol *RefreshProtocol) GenShares(sk *ring.Poly, levelStart, nPa
 
 	var sign int
 	for i := range refreshProtocol.maskBigint {
-		refreshProtocol.maskBigint[i] = ring.RandInt(bound)
+		refreshProtocol.maskBigint[i] = ring.RandIntCustom(refreshProtocol.prng, bound)
 		sign = refreshProtocol.maskBigint[i].Cmp(boundHalf)
 		if sign == 1 || sign == 0 {
 			refreshProtocol.maskBigint[i].Sub(refreshProtocol.maskBigint[i], bound)
