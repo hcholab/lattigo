@@ -52,6 +52,34 @@ func NewPCKSProtocol(params *ckks.Parameters, sigmaSmudging float64) *PCKSProtoc
 	return pcks
 }
 
+// NewPCKSProtocolDeterPRNG creates a new PCKSProtocol object and will be used to re-encrypt a ciphertext ctx encrypted under a secret-shared key mong j parties under a new
+// collective public-key with pre-chosen PRNGs
+func NewPCKSProtocolDeterPRNG(params *ckks.Parameters, sigmaSmudging float64, key []byte) *PCKSProtocol {
+
+	pcks := new(PCKSProtocol)
+
+	dckksContext := NewContext(params)
+
+	pcks.dckksContext = dckksContext
+
+	pcks.tmp = dckksContext.RingQP.NewPoly()
+	pcks.share0tmp = dckksContext.RingQP.NewPoly()
+	pcks.share1tmp = dckksContext.RingQP.NewPoly()
+
+	pcks.sigmaSmudging = sigmaSmudging
+
+	pcks.baseconverter = ring.NewFastBasisExtender(dckksContext.RingQ, dckksContext.RingP)
+	prng, err := utils.NewKeyedPRNG(key)
+	//prng, err := utils.NewPRNG()
+	if err != nil {
+		panic(err)
+	}
+	pcks.gaussianSampler = ring.NewGaussianSampler(prng)
+	pcks.ternarySamplerMontgomery = ring.NewTernarySampler(prng, dckksContext.RingQP, 0.5, true)
+
+	return pcks
+}
+
 // AllocateShares allocates the share of the PCKS protocol.
 func (pcks *PCKSProtocol) AllocateShares(level int) (s PCKSShare) {
 	s[0] = pcks.dckksContext.RingQ.NewPolyLvl(level)

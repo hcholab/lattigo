@@ -47,6 +47,32 @@ func NewRefreshProtocol(params *ckks.Parameters) (refreshProtocol *RefreshProtoc
 	return
 }
 
+// NewRefreshProtocolDeterPRNGs creates a new instance of the Refresh protocol using pre-chosen PRNGs
+func NewRefreshProtocolDeterPRNGs(params *ckks.Parameters, token1, token2 []byte) (refreshProtocol *RefreshProtocol) {
+
+	refreshProtocol = new(RefreshProtocol)
+	dckksContext := NewContext(params)
+	refreshProtocol.dckksContext = dckksContext
+	refreshProtocol.tmp = dckksContext.RingQ.NewPoly()
+	refreshProtocol.maskBigint = make([]*big.Int, dckksContext.n)
+	// TODO change
+	prng1, err1 := utils.NewKeyedPRNG(token1)
+	//prng1, err1 := utils.NewPRNG()
+	prng2, err2 := utils.NewKeyedPRNG(token2)
+	//prng2, err2 := utils.NewPRNG()
+	if err1 != nil || err2 != nil {
+		if err1 != nil {
+			panic(err1)
+		} else {
+			panic(err2)
+		}
+	}
+	refreshProtocol.gaussianSampler = ring.NewGaussianSampler(prng1)
+	refreshProtocol.prng = prng2
+
+	return
+}
+
 // AllocateShares allocates the shares of the Refresh protocol.
 func (refreshProtocol *RefreshProtocol) AllocateShares(levelStart int) (RefreshShareDecrypt, RefreshShareRecrypt) {
 	return refreshProtocol.dckksContext.RingQ.NewPolyLvl(levelStart), refreshProtocol.dckksContext.RingQ.NewPoly()
