@@ -3,7 +3,6 @@
 package ckks
 
 import (
-	"fmt"
 	"github.com/hhcho/mpc-core"
 	"github.com/ldsec/lattigo/v2/ring"
 	"github.com/ldsec/lattigo/v2/utils"
@@ -83,7 +82,7 @@ type encoderComplex128 struct {
 	values      []complex128
 	valuesfloat []float64
 	roots       []complex128
-	rootsBig 	[]bigComplex
+	rootsBig    []bigComplex
 }
 
 func newEncoder(params *Parameters) encoder {
@@ -132,7 +131,6 @@ func newEncoder(params *Parameters) encoder {
 	}
 }
 
-
 // NewEncoder creates a new Encoder that is used to encode a slice of complex values of size at most N/2 (the number of slots) on a Plaintext.
 func NewEncoderBig(params *Parameters, prec uint) Encoder {
 
@@ -159,12 +157,11 @@ func NewEncoderBig(params *Parameters, prec uint) Encoder {
 	return &encoderComplex128{
 		encoder:     encoder,
 		roots:       roots,
-		rootsBig: 	 rootsBig,
+		rootsBig:    rootsBig,
 		values:      make([]complex128, encoder.m>>2),
 		valuesfloat: make([]float64, encoder.m>>1),
 	}
 }
-
 
 // NewEncoder creates a new Encoder that is used to encode a slice of complex values of size at most N/2 (the number of slots) on a Plaintext.
 func NewEncoder(params *Parameters) Encoder {
@@ -192,7 +189,7 @@ func NewEncoder(params *Parameters) Encoder {
 	return &encoderComplex128{
 		encoder:     encoder,
 		roots:       roots,
-		rootsBig: 	 rootsBig,
+		rootsBig:    rootsBig,
 		values:      make([]complex128, encoder.m>>2),
 		valuesfloat: make([]float64, encoder.m>>1),
 	}
@@ -808,7 +805,6 @@ func (encoder *encoderComplex128) EncodeRVecNew(values mpc_core.RVec, slots uint
 	return
 }
 
-
 func (encoder *encoderComplex128) DecodeRVec(rtype mpc_core.RElem, plaintext *Plaintext, slots uint64, fracBits int) (res mpc_core.RVec) {
 	encoder.ringQ.InvNTTLvl(plaintext.Level(), plaintext.value, encoder.polypool)
 	encoder.ringQ.PolyToBigint(encoder.polypool, encoder.bigintCoeffs)
@@ -1237,7 +1233,7 @@ func piBig(prec uint) *big.Float {
 		return v
 	}
 
-	fmt.Println("Pi", prec)
+	//fmt.Println("Pi", prec)
 
 	v = new(big.Float)
 	v.Copy(piBase)
@@ -1381,6 +1377,7 @@ func scaleDownBig(coeff *big.Int, n float64) (x *big.Float) {
 }
 
 var halfFloat = big.NewFloat(0.5)
+
 func arithRound(a *big.Float) *big.Int {
 	var i *big.Int
 	if a.Signbit() {
